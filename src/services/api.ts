@@ -27,36 +27,31 @@ const SNAPLOGIC_CONFIG = {
 //  Uses the Vite dev proxy at /snaplogic-api to bypass CORS
 // ============================================================
 const callSnapLogicPipeline = async (req: ChatRequest): Promise<ChatResponse> => {
-  // In development, route through Vite proxy to avoid CORS
   const isDev = import.meta.env.DEV;
-  const basePath = isDev
-    ? '/snaplogic-api/api/1/rest/feed/run/task/srivensandbox/projects/saikiran%20pamula/sai_Rest_API_Integration%20Task'
-    : SNAPLOGIC_CONFIG.PIPELINE_URL;
 
-  // SnapLogic Triggered Tasks read parameters from query strings
-  const queryParams = new URLSearchParams({
-    employeeId: req.employeeId,
-    question: req.question,
-  }).toString();
-  const url = `${basePath}?${queryParams}`;
+  // In production we call the Vercel serverless proxy (same origin, no CORS)
+  const url = '/api/snaplogic';
 
-  console.log(`[WorkWise API] Calling SnapLogic pipeline (${isDev ? 'via proxy' : 'direct'})...`);
+  console.log(`[WorkWise API] Calling Vercel proxy (${isDev ? 'via proxy' : 'direct'})...`);
   console.log(`[WorkWise API] Params:`, { employeeId: req.employeeId, question: req.question });
 
   try {
     const response = await axios.post(
       url,
-      {},
+      {
+        employeeId: req.employeeId,
+        question: req.question,
+      },
       {
         headers: {
-          'Authorization': `Bearer ${SNAPLOGIC_CONFIG.BEARER_TOKEN}`,
+          // No auth header needed here – the serverless function adds the Bearer token
           'Content-Type': 'application/json',
         },
-        timeout: 60000, // 60s timeout — pipelines can take a while
+        timeout: 60000,
       }
     );
 
-    console.log('[WorkWise API] Raw SnapLogic Response:', response.data);
+    console.log('[WorkWise API] Raw SnapLogic Response (proxied):', response.data);
 
     // SnapLogic Triggered Tasks return: [{ content: { reply, cards }, status, content-type }]
     let pipelineOutput: any;
@@ -90,15 +85,6 @@ const callSnapLogicPipeline = async (req: ChatRequest): Promise<ChatResponse> =>
 
     return { reply, cards };
   } catch (error: any) {
-    console.error('[WorkWise API] SnapLogic Pipeline Error:', error?.response?.data || error.message);
-
-    // Re-throw with a user-friendly message
-    if (error.response) {
-      const status = error.response.status;
-      if (status === 401 || status === 403) {
-        throw new Error('Authentication failed. Please verify the SnapLogic Bearer token.');
-      } else if (status === 404) {
-        throw new Error('Pipeline not found. Please verify the Triggered Task URL.');
       } else if (status >= 500) {
         // Extract the actual error from SnapLogic's response body
         const errorBody = error.response.data;
