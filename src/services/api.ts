@@ -104,59 +104,58 @@ const callSnapLogicPipeline = async (req: ChatRequest): Promise<ChatResponse> =>
     }
     // Fallback for network or unexpected errors
     throw new Error('Unable to reach SnapLogic services. Please check your network connection.');
-  }
-};
+  };
 
-// ============================================================
-//  Mock/Fallback API  (used when USE_LIVE_API = false)
-// ============================================================
-const callMockApi = async (req: ChatRequest): Promise<ChatResponse> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const query = req.question.toLowerCase();
-      let reply = "I'm not exactly sure how to answer that. Try asking about your summary, notifications, attendance, support, or projects.";
-      let cards: KpiCards | undefined = undefined;
+  // ============================================================
+  //  Mock/Fallback API  (used when USE_LIVE_API = false)
+  // ============================================================
+  const callMockApi = async (req: ChatRequest): Promise<ChatResponse> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const query = req.question.toLowerCase();
+        let reply = "I'm not exactly sure how to answer that. Try asking about your summary, notifications, attendance, support, or projects.";
+        let cards: KpiCards | undefined = undefined;
 
-      if (query.includes('fail')) {
-        reject(new Error('Live services unavailable. Please try again.'));
-        return;
-      }
+        if (query.includes('fail')) {
+          reject(new Error('Live services unavailable. Please try again.'));
+          return;
+        }
 
-      if (query.includes('summary')) {
-        reply = 'Here is your workday summary. You have 3 notifications, checked in at 9:08 AM, and 1 support request pending.';
-        cards = { notifications: 3, attendance: 'Present', support: 1, timesheet: 'Submitted', projects: 2 };
-      } else if (query.includes('notification')) {
-        reply = 'You have 3 unread notifications relating to your timesheets and HR announcements.';
-        cards = { notifications: 3 };
-      } else if (query.includes('attendance')) {
-        reply = 'You are marked as Present. Check-in time was 9:08 AM.';
-        cards = { attendance: 'Present' };
-      } else if (query.includes('support')) {
-        reply = 'You have 1 pending IT support request regarding your laptop replacement.';
-        cards = { support: 1 };
-      } else if (query.includes('timesheet')) {
-        reply = 'Your timesheet is marked as Submitted for this week.';
-        cards = { timesheet: 'Submitted' };
-      } else if (query.includes('project')) {
-        reply = 'You are currently assigned to 2 active projects: WorkWise Migration and SnapLogic Integration.';
-        cards = { projects: 2 };
-      }
+        if (query.includes('summary')) {
+          reply = 'Here is your workday summary. You have 3 notifications, checked in at 9:08 AM, and 1 support request pending.';
+          cards = { notifications: 3, attendance: 'Present', support: 1, timesheet: 'Submitted', projects: 2 };
+        } else if (query.includes('notification')) {
+          reply = 'You have 3 unread notifications relating to your timesheets and HR announcements.';
+          cards = { notifications: 3 };
+        } else if (query.includes('attendance')) {
+          reply = 'You are marked as Present. Check-in time was 9:08 AM.';
+          cards = { attendance: 'Present' };
+        } else if (query.includes('support')) {
+          reply = 'You have 1 pending IT support request regarding your laptop replacement.';
+          cards = { support: 1 };
+        } else if (query.includes('timesheet')) {
+          reply = 'Your timesheet is marked as Submitted for this week.';
+          cards = { timesheet: 'Submitted' };
+        } else if (query.includes('project')) {
+          reply = 'You are currently assigned to 2 active projects: WorkWise Migration and SnapLogic Integration.';
+          cards = { projects: 2 };
+        }
 
-      resolve({ reply, cards });
-    }, 1500);
-  });
-};
+        resolve({ reply, cards });
+      }, 1500);
+    });
+  };
 
-// ============================================================
-//  Main Export — auto-routes to live or mock based on config
-// ============================================================
-export const chatApi = async (req: ChatRequest): Promise<ChatResponse> => {
-  if (SNAPLOGIC_CONFIG.USE_LIVE_API && SNAPLOGIC_CONFIG.PIPELINE_URL && SNAPLOGIC_CONFIG.BEARER_TOKEN) {
-    return callSnapLogicPipeline(req);
-  }
-  // Fall back to mock if not configured
-  return callMockApi(req);
-};
+  // ============================================================
+  //  Main Export — auto-routes to live or mock based on config
+  // ============================================================
+  export const chatApi = async (req: ChatRequest): Promise<ChatResponse> => {
+    if (SNAPLOGIC_CONFIG.USE_LIVE_API && SNAPLOGIC_CONFIG.PIPELINE_URL && SNAPLOGIC_CONFIG.BEARER_TOKEN) {
+      return callSnapLogicPipeline(req);
+    }
+    // Fall back to mock if not configured
+    return callMockApi(req);
+  };
 
-// Keep old export name for backwards compat
-export const mockChatApi = chatApi;
+  // Keep old export name for backwards compat
+  export const mockChatApi = chatApi;
