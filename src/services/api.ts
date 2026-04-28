@@ -106,6 +106,8 @@ const callSnapLogicPipeline = async (req: ChatRequest): Promise<ChatResponse> =>
     throw new Error('Unable to reach SnapLogic services. Please check your network connection.');
   }
 
+  }
+
 };
 
 // ============================================================
