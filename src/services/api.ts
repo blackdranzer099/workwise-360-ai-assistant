@@ -157,5 +157,4 @@ const callSnapLogicPipeline = async (req: ChatRequest): Promise<ChatResponse> =>
     return callMockApi(req);
   };
 
-  // Keep old export name for backwards compat
-  export const mockChatApi = chatApi;
+// Keep old export name for backwards compat
