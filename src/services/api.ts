@@ -85,20 +85,27 @@ const callSnapLogicPipeline = async (req: ChatRequest): Promise<ChatResponse> =>
 
     return { reply, cards };
   } catch (error: any) {
-      } else if (status >= 500) {
-        // Extract the actual error from SnapLogic's response body
-        const errorBody = error.response.data;
+    // SnapLogic errors come with a response object containing status and data
+    const status = error.response?.status;
+    if (status) {
+      if (status >= 500) {
+        // Extract detailed error info from SnapLogic response body
+        const errorBody = error.response?.data;
         const failureMsg = errorBody?.failure || errorBody?.message || '';
         const reasonMsg = errorBody?.reason || '';
         const detail = [failureMsg, reasonMsg].filter(Boolean).join(' — ') || 'Unknown error';
         throw new Error(`SnapLogic Error (${status}): ${detail}. Please check the pipeline in SnapLogic Designer.`);
       }
+      // For client‑side errors (401, 403, 404, etc.) provide a generic message
       throw new Error(`SnapLogic API returned HTTP ${status}. Please try again.`);
-    } else if (error.code === 'ECONNABORTED') {
+    }
+    if (error.code === 'ECONNABORTED') {
       throw new Error('Request timed out. The pipeline is taking too long to respond.');
     }
+    // Fallback for network or unexpected errors
     throw new Error('Unable to reach SnapLogic services. Please check your network connection.');
   }
+
 };
 
 // ============================================================
