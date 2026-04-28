@@ -2,7 +2,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import axios from 'axios';
 
-// These env vars are set in the Vercel dashboard
+// Environment variables set in Vercel dashboard
 const PIPELINE_URL = process.env.SNAPLOGIC_PIPELINE_URL;
 const BEARER_TOKEN = process.env.SNAPLOGIC_BEARER_TOKEN;
 
@@ -23,7 +23,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     const snapResp = await axios.post(
       url,
-      {}, // SnapLogic reads params from query string
+      {}, // SnapLogic expects params in query string
       {
         headers: {
           Authorization: `Bearer ${BEARER_TOKEN}`,
@@ -33,7 +33,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       }
     );
 
-    // Forward the raw SnapLogic data back to the client
+    // Forward the raw SnapLogic response back to the client
     res.status(200).json(snapResp.data);
   } catch (error: any) {
     console.error('SnapLogic proxy error:', error);
